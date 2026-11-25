@@ -1,5 +1,7 @@
+using DSW_3P_PR02.Data;
 using DSW_3P_PR02.Repositories;
 using DSW_3P_PR02.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,11 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "CharacterHub API", Version = "v1" });
 });
 
-// Persistencia: archivo JSON (Singleton porque mantiene el lock del archivo).
-builder.Services.AddSingleton<IPersonajeRepository, JsonPersonajeRepository>();
+// Persistencia: SQL Server con Entity Framework Core.
+// (Versión anterior: builder.Services.AddSingleton<IPersonajeRepository, JsonPersonajeRepository>();)
+builder.Services.AddDbContext<CharacterHubContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CharacterHub")));
+builder.Services.AddScoped<IPersonajeRepository, SqlPersonajeRepository>();
 builder.Services.AddScoped<IPersonajeService, PersonajeService>();
 
 var app = builder.Build();
