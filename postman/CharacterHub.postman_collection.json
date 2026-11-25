@@ -1,0 +1,138 @@
+{
+  "info": {
+    "name": "CharacterHub API",
+    "description": "Pruebas de autenticación JWT y CRUD de personajes. Definir la variable 'password' con la contraseña del usuario demo (no se guarda en el repositorio).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5184" },
+    { "key": "username", "value": "admin" },
+    { "key": "password", "value": "" },
+    { "key": "token", "value": "" },
+    { "key": "personajeId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Personajes sin token (401)",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/personajes" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Sin token responde 401', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "2. Token inválido (401)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "token.falso.123", "type": "string" }] },
+        "method": "GET", "url": "{{baseUrl}}/api/personajes"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Token inválido responde 401', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "3. Login con contraseña incorrecta (401)",
+      "request": {
+        "auth": { "type": "noauth" }, "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"incorrecta\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Credenciales incorrectas responden 401', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "4. Login (obtiene JWT)",
+      "request": {
+        "auth": { "type": "noauth" }, "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Login responde 200', () => pm.response.to.have.status(200));",
+        "const r = pm.response.json();",
+        "pm.test('Devuelve token JWT', () => pm.expect(r.token.split('.').length).to.eql(3));",
+        "pm.test('Incluye expiración', () => pm.expect(r.expiresIn).to.be.above(0));",
+        "pm.collectionVariables.set('token', r.token);"
+      ] } }]
+    },
+    {
+      "name": "5. Consultar todos",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/personajes" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 con token', () => pm.response.to.have.status(200));",
+        "pm.test('Devuelve un arreglo', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "6. Registrar personaje",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Lara Croft\",\n  \"videojuego\": \"Tomb Raider\",\n  \"clase\": \"Exploradora\",\n  \"nivel\": 50,\n  \"poder\": 6000,\n  \"imagenUrl\": \"https://placehold.co/400x400/png?text=Lara\"\n}" },
+        "url": "{{baseUrl}}/api/personajes"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('201 Created', () => pm.response.to.have.status(201));",
+        "const p = pm.response.json();",
+        "pm.test('Nuevo personaje disponible', () => pm.expect(p.disponible).to.eql(true));",
+        "pm.collectionVariables.set('personajeId', p.id);"
+      ] } }]
+    },
+    {
+      "name": "7. Consultar por ID",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/personajes/{{personajeId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));"
+      ] } }]
+    },
+    {
+      "name": "8. Consultar por videojuego",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/personajes/videojuego/Tomb Raider" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Todos son de Tomb Raider', () => pm.response.json().forEach(p => pm.expect(p.videojuego).to.eql('Tomb Raider')));"
+      ] } }]
+    },
+    {
+      "name": "9. Consultar por nivel mínimo",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/personajes/nivel/70" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Nivel >= 70', () => pm.response.json().forEach(p => pm.expect(p.nivel).to.be.at.least(70)));"
+      ] } }]
+    },
+    {
+      "name": "10. Actualizar personaje",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Lara Croft\",\n  \"videojuego\": \"Tomb Raider\",\n  \"clase\": \"Arqueologa\",\n  \"nivel\": 55,\n  \"poder\": 6500,\n  \"disponible\": false,\n  \"imagenUrl\": \"https://placehold.co/400x400/png?text=Lara\"\n}" },
+        "url": "{{baseUrl}}/api/personajes/{{personajeId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Clase actualizada', () => pm.expect(pm.response.json().clase).to.eql('Arqueologa'));"
+      ] } }]
+    },
+    {
+      "name": "11. Eliminar personaje",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/api/personajes/{{personajeId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+      ] } }]
+    },
+    {
+      "name": "12. Consultar eliminado (404)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/personajes/{{personajeId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+      ] } }]
+    }
+  ]
+}
