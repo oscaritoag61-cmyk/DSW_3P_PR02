@@ -1,0 +1,32 @@
+[
+  {
+    "Id": 1,
+    "Nombre": "Kratos",
+    "Videojuego": "God of War",
+    "Clase": "Guerrero",
+    "Nivel": 90,
+    "Poder": 9500,
+    "Disponible": true,
+    "ImagenUrl": "https://placehold.co/400x400/png?text=Kratos"
+  },
+  {
+    "Id": 2,
+    "Nombre": "Geralt de Rivia",
+    "Videojuego": "The Witcher 3",
+    "Clase": "Brujo",
+    "Nivel": 75,
+    "Poder": 8200,
+    "Disponible": true,
+    "ImagenUrl": "https://placehold.co/400x400/png?text=Geralt"
+  },
+  {
+    "Id": 3,
+    "Nombre": "Jaina Proudmoore",
+    "Videojuego": "World of Warcraft",
+    "Clase": "Maga",
+    "Nivel": 60,
+    "Poder": 7000,
+    "Disponible": true,
+    "ImagenUrl": "https://placehold.co/400x400/png?text=Jaina"
+  }
+]
