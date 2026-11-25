@@ -70,11 +70,27 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+// ---------- CORS ----------
+// Los orígenes permitidos se leen de "Cors:AllowedOrigins" (appsettings.json o variables de entorno
+// Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, ...). Ahí se agrega el origen que indique el docente.
+const string PoliticaCors = "ClienteEvaluacion";
+var origenes = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(PoliticaCors, policy => policy
+        .WithOrigins(origenes.Select(o => o.Trim().TrimEnd('/')).ToArray())
+        .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        .WithHeaders("Authorization", "Content-Type", "Accept")
+        .WithExposedHeaders("Location"));
+});
+
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// CORS debe ir antes de autenticación para que las peticiones preflight (OPTIONS) no reciban 401.
+app.UseCors(PoliticaCors);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
