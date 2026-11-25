@@ -1,11 +1,13 @@
 using DSW_3P_PR02.DTOs;
 using DSW_3P_PR02.Models;
 using DSW_3P_PR02.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DSW_3P_PR02.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/personajes")]
 [Produces("application/json")]
 public class PersonajesController : ControllerBase
